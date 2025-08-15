@@ -28,6 +28,6 @@ impl Camera {
 
     pub fn get_ray(&self, uv: Vec2) -> Ray {
         let uv = uv - 0.5;
-        Ray::new(self.pos, self.dir + uv.x * self.x + uv.y * self.y)
+        Ray::from(self.pos, self.dir + uv.x * self.x + uv.y * self.y)
     }
 }

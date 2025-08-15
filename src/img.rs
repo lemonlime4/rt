@@ -1,5 +1,7 @@
 use glam::{UVec2, Vec3, uvec2, vec2};
 
+use crate::color::{linear_to_srgb_scalar, srgb_to_linear_scalar};
+
 #[derive(Clone)]
 pub struct Image {
     pixels: Vec<Vec3>,
@@ -8,6 +10,7 @@ pub struct Image {
 }
 
 impl Image {
+    /// Zero-initialized image with specified dimensions
     pub fn new(width: u32, height: u32) -> Self {
         Self {
             pixels: vec![Vec3::ZERO; (width * height) as usize],
@@ -81,7 +84,9 @@ impl Image {
         for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
             let p = self.at(x, y);
             fn convert(x: f32) -> u8 {
-                (x * 256.0).floor().clamp(0.0, 255.0) as u8
+                (linear_to_srgb_scalar(x.clamp(0.0, 1.0)) * 256.0)
+                    .floor()
+                    .clamp(0.0, 255.0) as u8
             }
             *pixel = image::Rgb([convert(p.x), convert(p.y), convert(p.z)]);
         }

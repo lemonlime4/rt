@@ -1,4 +1,6 @@
-use glam::Vec3;
+use std::f32::consts::TAU;
+
+use glam::{Vec3, vec3};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Ray {
@@ -7,7 +9,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn new(orig: Vec3, dir: Vec3) -> Self {
+    pub fn from(orig: Vec3, dir: Vec3) -> Self {
         Self {
             orig,
             dir: dir.normalize(),
@@ -19,48 +21,14 @@ impl Ray {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Intersection {
-    pub pos: Vec3,
-    pub t: f32,
-    pub normal: Vec3,
+pub fn random_dir<S: random::Source>(source: &mut S) -> Vec3 {
+    let (sin, cos) = f32::sin_cos(source.read::<f32>() * TAU);
+    let u = source.read::<f32>();
+    let r = (1.0 - u * u).sqrt();
+    vec3(cos * r, sin * r, u * 2.0 - 1.0)
 }
 
-// impl Intersection {
-//     fn from_ray(ray: Ray, t: f32) -> Self {
-//         Self { pos: ray.at(t), t }
-//     }
-// }
-
-pub trait Geometry {
-    fn intersect(&self, ray: Ray) -> Option<Intersection>;
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Ball {
-    pub center: Vec3,
-    pub radius: f32,
-}
-
-impl Geometry for Ball {
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
-        let oc = ray.orig - self.center;
-        let b = oc.dot(ray.dir);
-        let c = oc.dot(oc) - self.radius * self.radius;
-        let h = b * b - c;
-        if h < 0.0 {
-            return None;
-        }
-        let h = h.sqrt();
-        let t0 = -b - h;
-        let t1 = -b + h;
-        let t = match (t0 < 0.0, t1 < 0.0) {
-            (false, _) => t0,
-            (true, false) => t1,
-            _ => None?,
-        };
-        let pos = ray.at(t);
-        let normal = (pos - self.center).normalize();
-        Some(Intersection { pos, normal, t })
-    }
+pub fn random_dir_in_hemisphere<S: random::Source>(source: &mut S, normal: Vec3) -> Vec3 {
+    let dir = random_dir(source);
+    dir * dir.dot(normal).signum()
 }
